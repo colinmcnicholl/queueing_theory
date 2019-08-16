@@ -1,12 +1,7 @@
 import random
 import math
 
-__DEBUG__ = False
 
-def log(text: str):
-    if __DEBUG__:
-        print(text)
-        
 def earlang_B(s, a):
     """Inputs: 's' the number of servers, 'a' the offered load in Earlangs.
     
@@ -21,28 +16,6 @@ def earlang_B(s, a):
         denominator_elems.append(num)
     return numerator / sum(denominator_elems)
     
-# test
-# print(f'probablity that all 15 servers are busy with carried load 9.6 is: {earlang_B(15, 9.6)}')
-# # 0.029131042132999503
-# print(f'probablity that all 12 servers are busy with carried load 9.6 is: {earlang_B(12, 9.6)}')
-# # 0.10464675636104714
-# print(f'probablity that all 10 servers are busy with carried load 9.6 is: {earlang_B(10, 9.6)}')
-# # 0.19604433570789698 vs Expected 0.1960443357
-# print(f'probablity that all 10 servers are busy with carried load 10.08 is: {earlang_B(10, 10.08)}')
-# # 0.2182604405754659
-# print(f'probablity that all 10 servers are busy with carried load 12.00 is: {earlang_B(10, 12.00)}')
-# # 0.30192504028637934
-# print(f'probablity that all 7 servers are busy with carried load 9.6 is: {earlang_B(7, 9.6)}')
-# # 
-# print(f'probablity that all 5 servers are busy with carried load 9.6 is: {earlang_B(5, 9.6)}')
-# # 0.5490691302782154 vs expected 0.5490691303
-# print(f'probablity that all 4 servers are busy with carried load 9.6 is: {earlang_B(4, 9.6)}')
-# # 0.6341848042687279
-# print(f'probablity that all 3 servers are busy with carried load 9.6 is: {earlang_B(3, 9.6)}')
-# # 0.7223419680996982
-# print(f'probablity that all 2 servers are busy with carried load 9.6 is: {earlang_B(2, 9.6)}')
-# 
-
 
 def get_inter_arrival_time(arrival_rate):
     return -(1 / arrival_rate) * math.log(1 - random.random())
@@ -59,50 +32,34 @@ def run_simulation(NSTOP=1000000, S=10, arrival_rate=4, avg_service_time=2.4):
     AB = 0                          # cumulative time all servers busy.
     
     for d in range(NSTOP):
-        log(f'customer: {d}, C: {C}')
         IA = get_inter_arrival_time(arrival_rate)   # Case 1 & 2, otherwise (1/4) for case 3 & 4.
         A += IA                                     # The arrival time for customer d.
-        log(f'IA: {IA}, A: {A}')
         J = 0                                       # Next server to be probed.
-        log(f'next server to be probed: {J}')
         while A < C[J]:
-            log(f'inside if so arrival time: {A} before server {J} is available at time {C[J]}')
             J += 1
-            log(f'probe next server in line: {J}')
             if J == S:
-                log(f'inside if so server index {J} exceeds max server index {S-1}; K: {K}')
                 K += 1
-                log(f'number blocked customers now: {K}')
                 break
         else:
-            log(f'inside else so arrival time {A} after server {J} completion time {C[J]}')
             X = get_service_time(avg_service_time)
-            log(f'current time: {A}; service time: {X}; add these gives: {A+X}')
             C[J] = A + X
-            log(f'updated service completion times: {C}')
             M = C[0]
-            log(f'initialized minimum service completion time as: {M}')
             for i in range(1, S):
-                log(f'loop over other service completion times to get minimum, server: {i}')
                 if C[i] < M:
-                    log(f'inside if so server {i} has completion time {C[i]} < current min: {M}')
                     M = C[i]
-                    log(f'new minimum service completion time: {M}')
-            log(f'after finish loop minimum service completion time: {M}')
             if M > A:
-                log(f'inside if so minimum service completion time: {M} > current time: {A}')
-                log(f'before AB: {AB}; (M-A): {M-A}')
                 AB += M - A
-                log(f'after AB: {AB}')
-    print(f'K: {K}; AB: {AB}; A: {A}')    
-    print(K/NSTOP, AB/A)  # Fraction of customers blocked, fraction of time all servers simultaneously busy.
-    carried_load_simulation = arrival_rate * avg_service_time * (1 - (AB/A))
-    server_utilization_simulation = carried_load_simulation / S
-    print(f'server utilization from simulation: {server_utilization_simulation}')
+  
+    return K/NSTOP, AB/A  # Fraction of customers blocked, fraction of time all servers simultaneously busy.
+
   
 if __name__ == '__main__':
     random.seed(123)
-    print(run_simulation())
+    prop_customers_blocked, prop_time_all_servers_busy = run_simulation()
+    print(f'From simulation the proportion of customers blocled is: {prop_customers_blocked}')
+    print(f'From simulation the proportion of time all servers are simultaneously busy is {prop_time_all_servers_busy}')
+    prob_all_servers_busy_theory = earlang_B(10, 9.6)
+    print(f'from theory the proportion of time all servers are simultaneously busy is {prob_all_servers_busy_theory}')
         
     
 """
