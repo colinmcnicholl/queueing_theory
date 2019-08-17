@@ -31,42 +31,32 @@ Comment on the assertion: 'It is intuitively obvious that
 E(I) = e(x) and E(R) = E(X) / 2.'
 """
 
-# import random
-# from math import log
-
-
-# def renewal_process():
-    # c = 0
-    # SX = 0
-    # SR = 0
-    # SI = 0
-    # for j in range(10000):
-        # # print(f'for loop, j: {j}')
-        # S = 0
-        # T = -1000 * log(1 - random.random())        # A random interruption point.
-        # # print(f'A: {S}, random variable T: {T}')
-        # while S < T:
-            # # print(f'while loop, S: {S} < T: {T}')
-            # X = random.expovariate(1)               # X interrenewal time (exponentially distributed).
-            # # print(f'random variable X: {X}')
-            # c += 1
-            # SX += X
-            # S += X
-            # # print(f'c: {c}, SX: {SX}, S: {S}')
-        # R = S - T                                   # Remainder of interval interrupted at random.
-        # I = X                                       # length of interval interrupted at random.
-        # SR += R
-        # SI += I
-    # print(f'SX: {SX}, SI: {SI}, SR: {SR}')
-    # return SX/c, SI/10000, SR/10000                 # Average values of X, I and R based on 10,000 simulations.
+def renewal_process():
+    c = 0
+    SX = 0
+    SR = 0
+    SI = 0
+    for j in range(10000):
+        S = 0
+        T = -1000 * log(1 - random.random())# A random interruption point.
+        while S < T:
+            X = random.expovariate(1)       # X interrenewal time (exponentially distributed).
+            c += 1
+            SX += X
+            S += X
+        R = S - T   # Remainder of interval interrupted at random.
+        I = X       # length of interval interrupted at random.
+        SR += R
+        SI += I
+    print(f'SX: {SX}, SI: {SI}, SR: {SR}')
+    return SX/c, SI/10000, SR/10000 # Average values of X, I and R based on 10,000 simulations.
     
     
-# if __name__ == '__main__':
-    # print(renewal_process())
+if __name__ == '__main__':
+    print(renewal_process())
     
 # (0.9999828904343558, 2.0230036304379935, 1.0199996675935978) # CORRECT - agrees with theory.
-
-    
+   
 """
 b.
 Let X = Y + u, where u is a constant (to be treated as a parameter),
@@ -115,28 +105,22 @@ def renewal_process(nsims, u):
     SR = 0
     SI = 0
     for j in range(nsims):
-        # print(f'for loop, j: {j}')
         S = 0
-        T = -1000 * log(1 - random.random())        # A random interruption point.
-        # print(f'A: {S}, random variable T: {T}')
+        T = -1000 * log(1 - random.random())    # A random interruption point.
         while S < T:
-            # print(f'while loop, S: {S} < T: {T}')
             Z = random.random()
             if Z < 0.9:
                 Y = 1
             else:
                 Y = 11
-            X = Y + u               # X interrenewal time (exponentially distributed).
-            # print(f'random variable X: {X}')
+            X = Y + u   # X interrenewal time (exponentially distributed).
             c += 1
             SX += X
             S += X
-            # print(f'c: {c}, SX: {SX}, S: {S}')
-        R = S - T                                   # Remainder of interval interrupted at random.
-        I = X                                       # length of interval interrupted at random.
+        R = S - T      # Remainder of interval interrupted at random.
+        I = X          # length of interval interrupted at random.
         SR += R
         SI += I
-    # print(f'SX: {SX}, SI: {SI}, SR: {SR}')
     return round(SX/c, 8), round(SI/nsims, 8), round(SR/nsims, 8) # Average values of X, I and R based on 10,000 simulations.
     
     
