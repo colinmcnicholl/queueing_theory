@@ -2,36 +2,6 @@ import random
 import math
 import statistics
 import pylab
-
-
-__DEBUG__ = False
-
-def log(text: str):
-    if __DEBUG__:
-        print(text)
-        
-def earlang_B(s, a):
-    """Inputs: 's' the number of servers, 'a' the offered load in Earlangs.
-    
-    Earlang loss formula:
-    
-    B(s,a) = (a^s / s!) / sum{k=0 to k=s} (a^k / k!)
-    
-    Output: The probability that all s servers are busy.
-    """
-    numerator = a**s / math.factorial(s)
-    denominator_elems = []
-    for k in range(s+1):
-        num = a**k / math.factorial(k)
-        denominator_elems.append(num)
-    return numerator / sum(denominator_elems)
-    
-# test
-# print(f'probablity that all 2 servers are busy with carried load 9.6 is: {earlang_B(2, 1.8)}')
-s = 10
-a = 9.6
-print(f'For {s} servers and offered load {a} the probability that all servers are busy..')
-print(f'by earlang_B formula: {earlang_B(s, a)}')
     
     
 def earlang_B_rec(n, a):
@@ -48,12 +18,6 @@ def earlang_B_rec(n, a):
     if n == 0: return 1
     
     return a * earlang_B_rec(n-1, a) / (n + a*earlang_B_rec(n-1, a))
-    
-# test
-n = 10
-a = 9.6
-print(f'For {n} servers and offered load {a} the probability that all servers are busy..')
-print(f'by earlang_B recursive formula: {earlang_B_rec(n, a)}')
 
 
 def earlang_C(s, a):
@@ -70,16 +34,6 @@ def earlang_C(s, a):
     assert s > a
     
     return (s * earlang_B_rec(s, a)) / (s - a*(1 - earlang_B_rec(s, a)))
-    
-# test
-# s = 2
-# a = 1.8
-# print(f'For {s} servers and offered load {a} the probability that all servers are busy..')
-# print(f' by the Earlang delay formula is: {earlang_C(s, a)}')
-s = 10
-a = 9.6
-print(f'For {s} servers and offered load {a} the probability that all servers are busy..')
-print(f'by the Earlang delay formula is: {earlang_C(s, a)}')
 
 
 def get_inter_arrival_time(arrival_rate):
@@ -109,60 +63,34 @@ def run_simulation(NSTOP=1000000, S=10, arrival_rate=4, avg_service_time=2.4):
     wait_times = []                 # Collect waiting times for post analysis.
     data = []
     for d in range(NSTOP):
-        log(f'customer: {d}, C: {C}')
         IA = get_inter_arrival_time(arrival_rate)   # Case 1 & 2, otherwise (1/4) for case 3 & 4.
-        # interarrival_times.append(IA)
         A += IA                                     # The arrival time for customer d.
-        log(f'IA: {IA}, A: {A}')
         J = 0                                       # Next server to be probed.
-        log(f'next server to be probed: {J}')
         while A < C[J]:
-            log(f'inside if so arrival time: {A} before server {J} is available at time {C[J]}')
             J += 1
-            log(f'probe next server in line: {J}')
             if J == S:
-                log(f'inside if so server index {J} exceeds max server index {S-1}')
                 K += 1
                 # Find next server to become available and at what time.
                 J, M = first_available_server_and_time(C)
-                log(f'next free server {J} at time: {M}')
                 W = M - A       # Waiting time.
-                log(f'customer {d} has to wait: {W}')
                 wait_times.append(W)
                 AB += W
                 X = get_service_time(avg_service_time)
-                log(f'service time: {X}')
                 SX += X
-                log(f'cumulative service time: {SX}')
                 C[J] = M + X
                 data.append((d, IA, A, W, J, S))
-                log(f'customer {d} arrived at time : {A}, waited until time: {M}, started service with server: {J} for duration: {X}')
-                log(f'after update server completion times: {C} about to go to next customer')
                 # Next customer
                 break
         else:
-            log(f'inside else so arrival time {A} after server {J} completion time {C[J]}')
             wait_times.append(0)
             X = get_service_time(avg_service_time)
             SX += X
-            log(f'SX: {SX}')
-            log(f'current time: {A}; service time: {X}; add these gives: {A+X}')
             C[J] = A + X
-            log(f'updated service completion times: {C}')
-            data.append((d, IA, A, 0, J, S))
     
     mean_wait_time = statistics.mean(wait_times)
     print(f'statistical mean of wait_times: {mean_wait_time}')
     
-    log(f'len(wait_times) : {len(wait_times)} == NSTOP: {NSTOP}')
     average_wait_time_per_unit_time = (1/avg_service_time)*sum(wait_times) / len(wait_times)
-    # avg_wait_per_unit_service_time = average_wait_time / avg_service_time
-    # print(f'last 10 wait_times: {wait_times[-10:]}')
-    # print(f'avg_wait_per_unit_service_time: {avg_wait_per_unit_service_time}')
-    num_cust_no_wait = wait_times.count(0)
-    # print(f'{num_cust_no_wait} customers have no wait.')
-    # print(f'{K} customers have some wait.')
-    # print(f'wait times: {wait_times}')
     carried_load = (SX/A)
     print(f'Simulation carried load: {carried_load}')
     theory_loss_system_carried_load = (arrival_rate*avg_service_time) * (1 - earlang_B(S, arrival_rate*avg_service_time))
@@ -173,10 +101,7 @@ def run_simulation(NSTOP=1000000, S=10, arrival_rate=4, avg_service_time=2.4):
     print(f'theory delay system rho: {theory_delay_system_rho}')
     assert (len(wait_times) - num_cust_no_wait) == K
     print(f'Simulation E(W) per unit time: {average_wait_time_per_unit_time}') 
-    # theory_delay_system_expected_value_wait_time_per_unit_time = ((earlang_C(S, arrival_rate*avg_service_time))/((1-theory_delay_system_rho)*S))
-    # print(f'By theory delay system expected value for wait time: {theory_delay_system_expected_value_wait_time_per_unit_time}')
     print(f'AB/A: {AB/A}')
-    # print(f'theory delay system earlang_C {S} servers, offered load: {arrival_rate*avg_service_time}, C(s,a): {earlang_C(S, arrival_rate*avg_service_time)}')
     print(f'K/NSTOP: {K/NSTOP}')
     
     sim_probs = [K/NSTOP]
