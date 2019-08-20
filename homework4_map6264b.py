@@ -1,11 +1,6 @@
 import random
 import math
 
-__DEBUG__ = False
-
-def log(text: str):
-    if __DEBUG__:
-        print(text)
         
 def earlang_B_rec(n, a):
     """Inputs: 's' the number of servers, 'a' the offered load in Earlangs.
@@ -46,11 +41,14 @@ def get_best_time_next_source(source_array):
     source_ndx = source_array.index(min_time)
     return min_time, source_ndx
     
+    
 def get_offered_load_per_idle_source(num_sources, intended_offered_load):
     return intended_offered_load / (num_sources - intended_offered_load)
     
+    
 def prob_source_busy_no_interaction(offered_load_per_idle_source):
     return offered_load_per_idle_source / (1 + offered_load_per_idle_source)
+    
     
 def get_rate_for_source_when_idle(offered_load_per_idle_source, avg_service_time):
     return offered_load_per_idle_source / avg_service_time
@@ -72,60 +70,34 @@ def run_simulation(NSTOP=1000000, num_sources=1000, S=10, intended_offered_load=
     AB = 0                          # cumulative time all servers busy.
     
     for d in range(NSTOP):
-        log(f'customer: {d}, C: {C}, source_array: {source_array}')
         IA, ndx = get_best_time_next_source(source_array)   # Case 1 & 2, otherwise (1/4) for case 3 & 4.
-        # IAS.append(IA)
         A = IA                                     # The arrival time for customer d.
         log(f'IA: {IA}, A: {A}')
         # Having moved clock to new time, update source_array, S.
         # Need to generate think time, whether or not source is carried.
         a_hat = get_offered_load_per_idle_source(num_sources, intended_offered_load)
-        log(f'offered load per idle source a_hat: {a_hat}')
         gamma = get_rate_for_source_when_idle(a_hat, avg_service_time)
-        log(f'rate per source, gamma: {gamma}')
         think_time = (1/gamma)#get_think_time(gamma)# (1/gamma) case 3
-        log(f'think time: {think_time}')
-        # 
         J = 0                                       # Next server to be probed.
-        log(f'next server to be probed: {J}')
         while A < C[J]:
-            log(f'inside if so arrival time: {A} before server {J} is available at time {C[J]}')
             J += 1
-            log(f'probe next server in line: {J}')
             if J == S:
-                log(f'inside if so server index {J} exceeds max server index {S-1}; K: {K}')
                 K += 1
-                log(f'number blocked customers now: {K}')
                 # Because source did not find an idle server add only think time.
                 source_array[ndx] += think_time
-                log(f'after update, index: {ndx}, source_array: {source_array}')
                 break
         else:
-            log(f'inside else so arrival time {A} after server {J} completion time {C[J]}')
             X = get_service_time(avg_service_time) # 2.4 case 2
-            log(f'current time: {A}; service time: {X}; add these gives: {A+X}')
             C[J] = A + X
-            log(f'updated service completion times: {C}')
             # Add service time plus think time to source array for the source that has been in service.
             source_array[ndx] += (X + think_time)
-            log(f'after update add think plus service times to index: {ndx} source array: {source_array}')
             M = C[0]
-            log(f'initialized minimum service completion time as: {M}')
             for i in range(1, S):
-                log(f'loop over other service completion times to get minimum, server: {i}')
                 if C[i] < M:
-                    log(f'inside if so server {i} has completion time {C[i]} < current min: {M}')
                     M = C[i]
-                    log(f'new minimum service completion time: {M}')
-            log(f'after finish loop minimum service completion time: {M}')
             if M > A:
-                log(f'inside if so minimum service completion time: {M} > current time: {A}')
-                log(f'before AB: {AB}; (M-A): {M-A}')
                 AB += M - A
-                log(f'after AB: {AB}')
                 
-    # print(f'IAS: {IAS}')
-    # print(f'mean IA: {sum(IAS)/len(IAS)}')
     print(f'# servers: {S}, # sources: {num_sources}, K: {K}; AB: {AB}; A: {A}')    
     print(f'fraction of customers blocked: {K/NSTOP}')  # Fraction of customers blocked
     rho = (intended_offered_load * (1 - (1 - (S / num_sources)) * K/NSTOP)) / S
