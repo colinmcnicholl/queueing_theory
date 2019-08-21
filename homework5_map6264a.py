@@ -1,108 +1,6 @@
 import random
 import math
-import statistics
-import pylab
-
-
-__DEBUG__ = False
-
-def log(text: str):
-    if __DEBUG__:
-        print(text)
         
-
-def get_theory_p_0_p_1(num_wait_pos, offered_load, num_servers=1):
-    p_array = [1]
-    for j in range(1, num_servers+1):
-        p_array_j = (offered_load**j / math.factorial(j)) * p_array[j - 1]
-        p_array.append(p_array_j)
-    sum_p_array = sum(p_array)
-    p_array_final = [el/sum_p_array for el in p_array]
-    assert 0.99999 < sum(p_array_final) < 1.00001
-    return p_array_final
-    
-# test
-# offered_load = 0.8
-# print(get_theory_p_0_p_1(0,0.8))
-    
-
-def arriving_customers_distribution(num_wait_pos, offered_load):
-    # follow exercise 21 p238
-    p_array = [1]
-    pass
-    
-
-def mean_busy_period(num_wait_pos, offered_load, p_0, p_1):
-    """Inputs: n the number of waiting positions as an integer and the
-    offered load, denoted a, as a float.
-    
-    Output: The mean busy period as a float in units of average service time.
-    """    
-    if n == 1: return (1 / p_0) * 1 # tau = 1, as working in units of average service time.
-
-def prob_cust_lost(num_wait_pos, offered_load):
-    """Inputs: n the number of waiting positions as an integer and the
-    offered load, denoted a, as a float.
-    
-    Output: The probability that an arriving customer is lost, i.e., 
-    not carried by the single server in the M/M/1/n model with
-    Poisson arrivals, exponential service times, a single server and
-    a finite number, n, waiting positions.  The probability is a float
-    in the range (0, 1).
-    """
-    n = num_wait_pos
-    a = offered_load
-    p_0 = 1 / ( 1 + a * sum([a**i for i in range(n+1)]) )
-    p_n_plus_one = a**(n+1) * p_0
-    return p_n_plus_one
-    
-# test
-# a = 0.8
-# wait_positions = [0,1,2,4,8,16,32]
-# for num_wait_pos in wait_positions:
-    # print(f'for {num_wait_pos} waiting positions and offered load {a} the loss probability is: {prob_cust_lost(num_wait_pos, a)}') 
-# a = 1.2
-# for num_wait_pos in wait_positions:
-    # print(f'for {num_wait_pos} waiting positions and offered load {a} the loss probability is: {prob_cust_lost(num_wait_pos, a)}') 
-
- 
-def get_theory_server_utilization(num_wait_pos, offered_load):
-    loss_prob = prob_cust_lost(num_wait_pos, offered_load)
-    return offered_load * (1 - loss_prob)
-    
-# test
-# a = 0.8
-# wait_positions = [0,1,2,4,8,16,32]
-# for num_wait_pos in wait_positions:
-    # print(f'for offered load {a} and {num_wait_pos} the theoretical server utilization is {get_theory_server_utilization(num_wait_pos, a)}')
-    
-# a = 1.2
-# for num_wait_pos in wait_positions:
-    # print(f'for offered load {a} and {num_wait_pos} the theoretical server utilization is {get_theory_server_utilization(num_wait_pos, a)}')
-    
-    
-def get_average_wait_time_carried_customers(num_wait_pos, offered_load):
-    n = num_wait_pos
-    a = offered_load
-    p_0 = 1 / (1 + a * sum([a**i for i in range(n + 1)]))
-    p_array = [p_0]
-    for j in range(1, n + 2):
-        prob_j = a**j * p_0
-        p_array.append(prob_j)
-    average_queue_length = sum([j * prob for j, prob in enumerate(p_array[2:], start=1)])
-    average_waiting_time = average_queue_length / offered_load
-    return average_waiting_time
-    
-# test
-# a = 0.8
-# wait_positions = [0,1,2,4,8,16,32]
-# for num_wait_pos in wait_positions:
-    # print(f'for offered load {a} and {num_wait_pos} the theoretical average waiting time for carried customers is {get_average_wait_time_carried_customers(num_wait_pos, a)}')
-    
-# a = 1.2
-# for num_wait_pos in wait_positions:
-    # print(f'for offered load {a} and {num_wait_pos} the theoretical average waiting time for carried customers is {get_average_wait_time_carried_customers(num_wait_pos, a)}')
-
     
 def earlang_B_rec(n, a):
     """Inputs: 's' the number of servers, 'a' the offered load in Earlangs.
@@ -118,7 +16,7 @@ def earlang_B_rec(n, a):
     if n == 0: return 1
     
     return a * earlang_B_rec(n-1, a) / (n + a*earlang_B_rec(n-1, a))
-    
+
 
 def earlang_C(s, a):
     """Inputs: 's' the number of servers, 'a' the offered load in Earlangs.
@@ -142,97 +40,67 @@ def get_inter_arrival_time(arrival_rate):
     
 def get_service_time(avg_service_time):
     return -(avg_service_time) * math.log(1 - random.random())
-        
+    
+    
+def get_available_pos(WP):
+    for i, el in enumerate(WP):
+        if el[0] == 0:
+            return i
+    return None
+    
+    
+def update_wp(IA, A, WP):
+    if not WP: return []
+    for i, el in enumerate(WP): # loop over each customer in waiting position array.
+        if A - el[1] >= el[0]:  # (arrival time newly arrived customer - arrival time waiting customer) >= waiting time for the waiting customer?
+            WP[i] = (0, 0)      # Then the waiting customer is no longer waiting.
+    return WP
+    
            
-def run_simulation(num_wait_pos, offered_load, NSTOP=100000, S=1):
-    wait_pos_status = [0 * i for i in range(num_wait_pos)]    # Array to hold state of the n waiting positions.  Let 0 denote waiting position unoccupied and 1 denote waiting position occupied.
-    SCT = 0                         # completion time server.
-    T = 0                           # current time.
+def run_simulation(buffer_size, offered_load, NSTOP=100000):
+    WP = [(0,0)] * buffer_size   # waiting position status.
+    A = 0                           # current time.
+    W = 0                           # Current waiting time.
+    SW = 0                          # Sum of waiting times.
+    X = 0                           # Current service time.
+    SC = 0                          # Server completion time.
     K = 0                           # number blocked customers.
-    W = 0                           # Initialize waiting time.
-    SW = 0                          # Initialize cumulative waiting time.
-    CW = 0                          # count of customers who had to wait for service.
     SX = 0                          # Cumulative service time.
-    wait_times = []
+    CWC = 0                         # Count of number of customers who have to wait.
     for d in range(NSTOP):
-        log(f'customer: {d}, SCT: {SCT}')
-        IA = get_inter_arrival_time(offered_load)   # Take mu = 1 by convention.  a = lambda/mu, i.e., a = lambda or offered load = arrival rate.
-        T += IA                                     # The arrival time for customer d.
-        log(f'IA: {IA}, T: {T}')
-        if T < SCT:                                 # Has customer interrupted service / Is the server busy?
-            log(f'customer has interrupted service, T: {T} < SCT: {SCT}')
-            if len(wait_pos_status) > 0 and any([el == 0 for el in wait_pos_status]):  # Any available positions in queue?
-                log(f'There is a queue and it has available positions, wait_pos_status: {wait_pos_status}')
-                W = SCT - T                      # waiting time = waiting time previous customer + service time previous customer - time I arrived?
-                log(f'wait time = SCT: {SCT} - T: {T} == {W}')
-                if W < 0:                           # Is waiting time negative?
-                    log('wait time negative')
-                    W = 0                           # Set waiting time as zero.
-                    X = get_service_time(1)         # Generate my service time.
-                    log(f'service time: {X}')
-                    SCT = T + X                     # Service completion time is current time + service time.
-                    log(f'server completion time == T: {T} + X: {X}: {SCT}')
-                    SX += X                         # Increment cumulative service time.
-                    log(f'cumulative service time: {SX}')
-                if W > 0:                           # Customer had to wait?
-                    log(f'wait time W: {W} is positive')
-                    CW += 1                          # If waiting time positive increment count of customers who had to wait.
-                    log(f'after increment count of number of customers who have had to wait: {CW}')
-                    ndx = wait_pos_status[::-1].index(0)  # Get index of smallest value in waiting postion array from end.
-                    log(f'index from right end of first available waiting position: {ndx}')
-                    wait_pos_status[-ndx-1] = 1           # Change status to 1, to denote waiting position is occupied.
-                    log(f'new waiting position status: {wait_pos_status}')
-                    log(f'waiting time: {W}, before cumulative waiting time: {SW}')
-                    SW += W                             # Increment cumulative waiting time.
-                    log(f'after increment cumulative waiting time: {SW}')
-                    wait_times.append(W)
-                    log(f'cumulative waiting time: {SW}')
-                    X = get_service_time(1)             # Generate my service time.
-                    log(f'service time: {X}')
-                    SCT += X                            # Increment server completion time.
-                    log(f'server completion time == old SCT + X: {X}, i.e., {SCT}')
-                    SX += X                             # Increment cumulative service time.
-                    log(f'cumulative service time: {SX}')
-            else:                                   # There are waiting positions but all are occupied.
-                K += 1                              # Increment count of customers lost.
-                log(f'no queue or there is a queue but it was full.  # customers lost: {K}')
-        else:                                       # When customer arrives server is idle.
-            log(f'customer has NOT interrupted service, T: {T} > SCT: {SCT}')
-            wait_times.append(0)
-            X = get_service_time(1)                 # Straight to service for time X.
-            log(f'service time: {X}')
-            SCT = T + X                                # Increment server completion time.
-            log(f'server completion time == T: {T} + X: {X}: {SCT}')
-            SX += X                                 # Increment cumulative service time.
-            log(f'cumulative service time: {SX}')
-            if len(wait_pos_status) > 0:            # Is there a queue?
-                # log('there is a queue about to reset waiting positions')
-                # wait_pos_status.clear()               # First customer into queue is first customer out of queue to get service.
-                # wait_pos_status = [0 * i for i in range(num_wait_pos)]        # Enter an available space at the back of the queue to re-establish the number of waiting positions.
-                # log(f'new waiting position status: {wait_pos_status}')
-                for i, el in enumerate(wait_pos_status):
-                    if el > 0:
-                        ndx = i
-                        wait_pos_status[ndx] = 0
-                        break
+        IA = get_inter_arrival_time(offered_load)   # Inter-arrival time.
+        A += IA                                     # The arrival time for customer d.
+        WP = update_wp(IA, A, WP)
+        if A < SC:
+            if not WP or all([el[0] > 0 for el in WP]):
+                K += 1
+            else:
+                W = SC - A
+                assert W >= 0
+                SW += W
+                ndx = get_available_pos(WP)
+                WP[ndx] = (W, A)
+                X = get_service_time(1)
+                SC = A + W + X
+                SX += X
+                CWC += 1
+        else:
+            assert (all([el == (0, 0) for el in WP]))
+            X = get_service_time(1)
+            SC = A + X
+            SX += X
+            CWC += 1
             
-    
-    print(f'for n: {num_wait_pos} and offered load, a: {offered_load}..')
-    # print(f'T: {T}, K: {K}, SW: {SW}, SX: {SX}, CW: {CW}, (NSTOP - K): {NSTOP - K}')
-    print(f'server utilization by simulation: {SX/T}')
-    # print(f'proportion of carried customers who have to wait: {CW/(NSTOP - K)}')
-    # print(f'average service time per carried customer: {SX/(NSTOP - K)}')
-    print(f'average waiting time per carried customer by simulation: {SW/(NSTOP - K)}')
-    # print(f'mean wait time: {statistics.mean(wait_times)}')
-    # print(f'number of customers lost: {K}')
+    print(f'for n: {buffer_size} and offered load, a: {offered_load}..')
+    print(f'server utilization by simulation: {SX/A}')
     print(f'proportion of customers lost: {K/NSTOP}')
+    print(f'average waiting time per carried customer by simulation: {SW/CWC}')
+    print(f'A/NSTOP: {A/NSTOP}')
+    assert ((NSTOP - K) == CWC)
     
-
 if __name__ == '__main__':
     random.seed(123)
-    print(run_simulation(0, 0.8))
-    
-    
+    print(run_simulation(2, 0.8))
     
 """
 MAP 6264 Homework 5 ( M/M/1/n ) 20 Points
@@ -248,5 +116,29 @@ In the first case, take a = 0.8 erlangs;
 in the second case, take a = 1.2 erlangs.
 Show the simulation code and output. Explain all theoretical calculations.
 
+                            Case 1
+                ρ                                               Πn+1                                   W(n)
+n   theory                  simulation              theory                  simulation          theory                  simulation
+0   0.4444444444444445      0.44452213471194785     0.4444444444444445      0.44461             0.0                     0.0
+1   0.5901639344262295      0.5887282238183281      0.26229508196721313     0.2612              0.32786885245901637     0.4457431030123395
+2   0.6612466124661247      0.6581555890835649      0.1734417344173442      0.17317             0.7046070460704608      0.8516817584312503
+4   0.7289444010755486      0.7282888480653664      0.08881949865556424     0.08962             1.4242345389886373      1.567585604438412     
+8   0.7759419500796657      0.7744750008776795      0.03007256240041786     0.03128             2.526444442379526       2.6224316346544425
+16  0.7963310259372157      0.8007682248130787      0.004586217578480438    0.00429             3.591826635515242       3.7715671316553983
+32  0.7998985365038771      0.8018415509683205      0.0001268293701537039   0.00016             3.978565836444025       4.138040575607979
+∞
+
+
+                            Case 2
+                ρ                                       Πn+1                                            W(n)
+n   theory                  simulation              theory                  simulation          theory                  simulation
+0   0.5454545454545455      0.5430735123149999      0.5454545454545454      0.54133             0.0                     0.0
+1   0.7252747252747254      0.7251686998249892      0.39560439560439553     0.39709             0.3296703296703296      0.5497540034312383
+2   0.8137108792846497      0.8123973071185027      0.32190760059612517     0.32112             0.760059612518629       1.1219161711070293
+4   0.8992942541329639      0.9003456814294474      0.25058812155586346     0.25254             1.768231768231768       2.382712481008391
+8   0.9614772431171408      0.9589251527256454      0.19876896406904926     0.19809             4.137217167521513       5.14582037940748
+16  0.9921946142678791      0.9915536155092198      0.17317115477676737     0.1698              9.758575084685834       11.684301705789991
+32  0.9995928533750761      0.9999363686415371      0.16700595552076986     0.16661             22.558018394051654      27.05288191507914
+∞
 
 """
