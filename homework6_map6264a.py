@@ -1,13 +1,6 @@
 import random
 import math
 
-
-__DEBUG__ = False
-
-def log(text: str):
-    if __DEBUG__:
-        print(text)
-        
     
 def earlang_B_rec(n, a):
     """Inputs: 's' the number of servers, 'a' the offered load in Earlangs.
@@ -73,58 +66,33 @@ def run_simulation(buffer_size, offered_load, NSTOP=100000):
     SX = 0                          # Cumulative service time.
     CWC = 0                         # Count of number of customers who have to wait.
     for d in range(NSTOP):
-        log(f'customer: {d}, WP: {WP}')
         IA = get_inter_arrival_time(offered_load)   # Inter-arrival time.
-        # log(f'IA: {IA}')
         A += IA                                     # The arrival time for customer d.
-        log(f'A: {A}')
         WP = update_wp(IA, A, WP)
-        # log(f'WP: {WP}')
         if A < SC:
-            # log(f'server busy; A: {A} < SC: {SC}')
             if not WP or all([el[0] > 0 for el in WP]):
-                # W = 0
                 K += 1
-                log(f'all waiting positions occupied; K: {K}, W: {W}, X: {X}')
             else:
-                log('some unoccupied waiting positions')
                 W = SC - A
-                log(f'waiting time = service completion time {SC} - customer arrival time {A}, i.e. W: {W}')
-                # if W < 0:
-                    # W = 0
                 assert W >= 0
-                log(f'waiting time {W}')
                 SW += W
-                log(f'sum of wait times SW: {SW}')
                 ndx = get_available_pos(WP)
-                # log(f'index of first available waiting position: {ndx}')
                 WP[ndx] = (W, A)
-                # log(f'WP: {WP}')
                 X = 1 # Constant service times.  HW5 get_service_time(1)
-                # log(f'service time: {X}')
                 SC = A + W + X
-                log(f'new service completion time: {SC} = customer arrival time {A} + wait time {W} + service time {X}')
                 SX += X
-                # log(f'sum of service times: {SX}')
                 CWC += 1
         else:
-            # log(f'server idle; A: {A} >= SC: {SC}')
             assert (all([el == (0, 0) for el in WP]))
-            # W = 0
             X = 1 # Constant service times.  HW5 get_service_time(1)
-            # log(f'service time: {X}')
             SC = A + X
-            log(f'new service completion time: {SC} = customer arrival time {A} + wait time {W} + service time {X}')
             SX += X
-            # log(f'sum of service times: {SX}')
             CWC += 1
             
     print(f'for n: {buffer_size} and offered load, a: {offered_load}..')
-    # print(f'A: {A}, K: {K}, SW: {SW}, SX: {SX}, (NSTOP - K): {NSTOP - K}')
     print(f'server utilization by simulation: {SX/A}')
     print(f'proportion of customers lost: {K/NSTOP}')
     print(f'average waiting time per carried customer by simulation: {SW/CWC}')
-    # print(f'A/NSTOP: {A/NSTOP}')
     assert ((NSTOP - K) == CWC)
     
     
@@ -154,7 +122,7 @@ n   theory      simulation          theory      simulation      theory    simula
 8               0.792462323287647               0.00575                   1.71747375246176
 16              0.796909836251132               0.00017                   1.94081139444109
 32              0.797045333957905               0                         1.95189906309966
-∞   0.8                             0.8                          2
+∞   0.8                             0.0                          2
 
 
                             Case 2
@@ -167,6 +135,6 @@ n   theory      simulation          theory      simulation          theory      
 8               0.99252468733774                0.16983                         5.68402612515239
 16              0.999662228303333               0.16386                         13.3160636900466
 32              1.00029587934383                0.16333                         29.2412930636757
-∞   1.0                             1.0                                         infinity
+∞   1.0                             1.0                             infinity
 
 """
