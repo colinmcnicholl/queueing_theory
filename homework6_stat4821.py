@@ -20,45 +20,15 @@ def theory_server_utilization(arrivals_rate, mean_service_time):
         return arrivals_rate * mean_service_time
     return 1
     
-# test
-arrivals_rate = 1.6
-mean_service_time = 0.5
-print(theory_server_utilization(arrivals_rate, mean_service_time))
-# 0.8
-    
 def cumulative_waiting_time_distribution_theory(server_utilization, time, mean_service_time):
     if time < 0: return 0
     return 1 - server_utilization * math.exp(-(1-server_utilization)*(time/mean_service_time))
-    
-# test
-server_utilization = 0.8
-time = 0.5
-mean_service_time = 0.5
-print(cumulative_waiting_time_distribution_theory(server_utilization, time, mean_service_time))
-# 0.34501539753761445
-p_wait_greater_than_half = 1 - cumulative_waiting_time_distribution_theory(server_utilization, time, mean_service_time)
-print(f'From theory P(W > 0.5): {p_wait_greater_than_half}')
-# From theory P(W > 0.5): 0.6549846024623855
 
 def average_waiting_time_exponential_service_theory(server_utilization, mean_service_time):
     return (server_utilization / (1 - server_utilization)) * mean_service_time
-    
-# test
-server_utilization = 0.8
-mean_service_time = 0.5
-e_w = average_waiting_time_exponential_service_theory(server_utilization, mean_service_time)
-print(f'For M/M/1 queue, E(W) = {e_w}')
-# For M/M/1 queue, E(W) = 2.0000000000000004
 
 def average_waiting_time_constant_service_times_theory(server_utilization, service_time):
     return 0.5 * average_waiting_time_exponential_service_theory(server_utilization, service_time)
-    
-# test
-server_utilization = 0.8
-service_time = 0.5
-e_w = average_waiting_time_constant_service_times_theory(server_utilization, service_time)
-print(f'For M/D/1 queue, E(W) = {e_w}')
-# For M/D/1 queue, E(W) = 1.0000000000000002
 
 def expected_value_discrete(values, probabilities):
     e_x = 0
@@ -66,25 +36,11 @@ def expected_value_discrete(values, probabilities):
         e_x += x * p_x
     return e_x
     
-# test
-values = [1/3, 2]
-probabilities = [0.9, 0.1]
-average_value = expected_value_discrete(values, probabilities)
-print(f'For discrete distribution taling values: {values} with probabilities: {probabilities}...')
-print(f'The expected value is: {average_value}')
-# The expected value is: 0.5
-    
 def variance_discrete(values, probabilities, expected_value):
     v_x = 0
     for x, p_x in zip(values, probabilities):
         v_x += (x - expected_value)**2 * p_x
-    return v_x
-    
-# test
-var_x = variance_discrete(values, probabilities, average_value)
-print(f'For discrete distribution taling values: {values} with probabilities: {probabilities}...')
-print(f'The variance is: {var_x}')
-# The variance is: 0.25    
+    return v_x    
    
 def simulation(service_time_distribution, arrivals_rate=1.6, mean_service_time=0.5):
     T = 0
@@ -123,9 +79,6 @@ def simulation(service_time_distribution, arrivals_rate=1.6, mean_service_time=0
     
 # if __name__ == '__main__':
     random.seed(123)
-    # for service_time_distribution in [1,2,3,4]:
-        # simulation(service_time_distribution)
-        
     
     arrivals_rate = 1.6
     mean_service_time = 0.5
@@ -140,8 +93,6 @@ def simulation(service_time_distribution, arrivals_rate=1.6, mean_service_time=0
         print(f'From simulation the probability customer must wait <= {time} is: {prob_wait_less_than_t}')
         probabilities.append(prob_wait_less_than_t)
     
-
-
 """
 STA 4821 Homework 6 (The M/G/1 Queue) 40 Points
 The following BASIC code simulates the single-server queue with FIFO service.
